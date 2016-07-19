@@ -31,6 +31,8 @@
 ![算法的执行框架](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png)
 
 ## Run Demo
+### 测试数据的分布
+![原始测试数据的分布](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png)
 
 ## References
 1. [Clustering by fast search and find of density peaks](http://people.sissa.it/~laio/Research/Res_clustering.php)
