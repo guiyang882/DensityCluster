@@ -28,7 +28,7 @@
 3. 使用libopm进行算法的并行化,提高运行效率
 
 ## 程序运行的框架
-![算法的执行框架](https://github.com/ButBueatiful/dotvim/raw/master/screenshots/vim-screenshot.jpg)
+![算法的执行框架](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png)
 
 ## Run Demo
 
