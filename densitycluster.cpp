@@ -5,15 +5,41 @@
 #include "densitycluster.h"
 
 DensityCluster::DensityCluster() {
-
+    saveprefix = "/Users/liuguiyang/Documents/CodeProj/ConsoleProj/DensityCluster/data/";
 }
 
 DensityCluster::~DensityCluster() {
 
 }
 
-void DensityCluster::initFeatures(vector<vector<double>> features) {
-    m_features = features;
+void DensityCluster::initFeaturesLocal(string filename) {
+    ifstream in(filename, std::ifstream::in);
+    while(in.good()) {
+        string strFeature;
+        getline(in, strFeature);
+        vector<double> vals;
+        splitString(strFeature, vals, ',');
+        if(vals.size() > 0) {
+            m_features.push_back(vals);
+        }
+    }
+    in.close();
+    cout << "features size is (" << m_features.size() << "," << m_features[0].size() << ")" << endl;
+}
+
+void DensityCluster::splitString(string str, vector<double> &res, char ch) {
+    //trim the free space from the head and tail
+    str.erase(0,str.find_first_not_of(" "));
+    str.erase(str.find_last_not_of(" ") + 1);
+    if(str.size() == 0) return ;
+    int start=0, end=0;
+    while(start <= end && end < str.size()) {
+        while(end<str.size() && str[end]!=ch) end++;
+        string sub = str.substr(start, end-start);
+        res.push_back(stod(sub, 0));
+        while(end<str.size() && str[end]==ch) end++;
+        start = end;
+    }
 }
 
 void DensityCluster::generateFeatures(int row, int col) {
@@ -21,9 +47,9 @@ void DensityCluster::generateFeatures(int row, int col) {
     t = clock();
 
     std::default_random_engine generator;
-    std::normal_distribution<double> distribution01(0.0,2.0);
-    std::normal_distribution<double> distribution02(5.0,2.0);
-    std::normal_distribution<double> distribution03(-5.0,2.0);
+    std::normal_distribution<double> distribution01(0.0,1.0);
+    std::normal_distribution<double> distribution02(10.0,1.0);
+    std::normal_distribution<double> distribution03(-10.0,1.0);
 
     m_features.resize(row, vector<double>(col,0.0));
 
@@ -43,6 +69,34 @@ void DensityCluster::generateFeatures(int row, int col) {
 
     t = clock() - t;
     cout << "generateFeatures took me " << t << " clicks (" << ((float)t)/CLOCKS_PER_SEC << " seconds)." << endl;
+    saveData("features.csv", "FEATURE");
+}
+
+void DensityCluster::saveData(string filename, string saveType) {
+    ofstream out(saveprefix + filename, ofstream::out);
+    if(saveType.compare("FEATURE") == 0) {
+        for(int i=0;i<m_features.size();++i) {
+            for(int j=0;j<m_features[i].size()-1;++j) {
+                out << m_features[i][j] << ",";
+            }
+            out << m_features[i][m_features[i].size()-1] << endl;
+        }
+    }
+    if(saveType.compare("CENTER") == 0) {
+        for(int i=0;i<m_centers.size();++i) {
+            out << m_centers[i] << endl;
+        }
+    }
+    if(saveType.compare("RESULT") == 0) {
+        for(auto &kv : m_result) {
+            out << kv.first;
+            for(auto &val : kv.second) {
+                out << "," << val;
+            }
+            out << endl;
+        }
+    }
+    out.close();
 }
 
 double DensityCluster::calcDist(vector<double> &v1, vector<double> &v2) {
@@ -165,6 +219,7 @@ void DensityCluster::findDensity(double dc) {
         }
         m_density[i] = cnt;
     }
+    cout << "Finished Find Density !" << endl;
 }
 
 void DensityCluster::findDistanceToHigherDensity(double dc) {
@@ -192,6 +247,7 @@ void DensityCluster::findDistanceToHigherDensity(double dc) {
         }
         m_minDist2Higher[i] = minDist;
     }
+    cout << "Finished findDistanceToHigherDensity !" << endl;
 }
 
 void DensityCluster::findClusterCenters(double ratio) {
@@ -209,24 +265,37 @@ void DensityCluster::findClusterCenters(double ratio) {
     for(int i=0; i<total_len; ++i) {
         if(i <= selectInd && tmp[i].second) {
             m_centers.push_back(tmp[i].first);
-            m_selected.insert(m_features[tmp[i].first]);
-        } else if(tmp[i].second == 0.0) {
-            m_selected.insert(m_features[tmp[i].first]);
         }
     }
 
 //    for(int i=0; i<total_len; ++i) {
 //        cout << tmp[i].first << " ," << tmp[i].second << endl;
 //    }
+    saveData("centers.csv", "CENTER");
+    cout << "Save Centers Data !" << endl;
+}
 
-    cout << "Finished Done !" << endl;
+void DensityCluster::makeCenters() {
+    m_clusterDesignation.resize(m_features.size() ,0);
+    for(int i=0;i<m_centers.size();++i) {
+        m_clusterDesignation[m_centers[i]] = m_centers[i];
+    }
+    cout << "Finished Make Centers !" << endl;
 }
 
 void DensityCluster::findClusterDesignation() {
     int row = m_features.size();
     for(int i=0; i<row; ++i) {
+        int nearInd = i;
+        int status = m_clusterDesignation[nearInd];
+        while(status == 0) {
+            int ind = m_nearestNeighborOfHigherDensity[nearInd];
+            status = m_clusterDesignation[ind];
+            nearInd = ind;
+        }
         findSingleFeatureClusterDesignation(i);
     }
+    cout << "Finished findClusterDesignation !" << endl;
 }
 
 int DensityCluster::findSingleFeatureClusterDesignation(int nearIndex) {
@@ -235,15 +304,15 @@ int DensityCluster::findSingleFeatureClusterDesignation(int nearIndex) {
         int ind = m_nearestNeighborOfHigherDensity[nearIndex];
         int resInd = findSingleFeatureClusterDesignation(ind);
         m_clusterDesignation[nearIndex] = resInd;
+        return resInd;
     }
-    return 0;
+    return status;
 }
 
-vector<vector<int>> DensityCluster::fetchFeaturesInClusters() {
+void DensityCluster::fetchFeaturesInClusters() {
     int row = m_features.size();
-    vector<vector<int>> classifyCluster(m_centers.size(), vector<int>());
+    m_result.clear();
 
-#pragma omp parallel for
     for(int i=0; i<m_centers.size(); ++i) {
         vector<int> indCluster;
         for(int j=0; j<row; ++j) {
@@ -251,15 +320,7 @@ vector<vector<int>> DensityCluster::fetchFeaturesInClusters() {
                 indCluster.push_back(j);
             }
         }
-        classifyCluster[i] = indCluster;
+        m_result[m_centers[i]] = indCluster;
     }
-    return classifyCluster;
-}
-
-void DensityCluster::showVector(string header, vector<double> datas) {
-    cout << header << endl;
-    for(int i=0; i<datas.size(); ++i) {
-        cout << datas[i] << endl;
-    }
-    cout << endl;
+    saveData("densitycluster.csv", "RESULT");
 }
