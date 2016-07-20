@@ -54,6 +54,8 @@ public:
 
     /* 计算每个点到最近的高密度距离中的最大距离,同时确定每个点离那个点更近 */
     void findDistanceToHigherDensity(double dc, double maxd);
+
+    /* 如何从论文中曲线去分析,使用策略寻找处潜在的聚类中心 */
     void findClusterCenters(double ratio);
 
 private:
