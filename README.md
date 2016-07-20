@@ -31,7 +31,9 @@
 3. 使用libopm进行算法的并行化,提高运行效率
 
 ## 程序运行的框架
-![算法的执行框架](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png =200*200)
+<div align=center>
+<img src="https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png" width="200" height="200" alt="算法的执行框架"/>
+</div>
 
 ## 程序运行展示
 ### 测试数据的分布
