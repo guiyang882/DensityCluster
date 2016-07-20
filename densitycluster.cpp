@@ -148,53 +148,28 @@ bool DensityCluster::calculateDistMatrix() {
     return true;
 }
 
-double DensityCluster::getDCDist(double neighborRateLow, double neighborRateHigh) {
+double DensityCluster::getDCDist(double dc_percent, double &maxd) {
     clock_t t;
     t = clock();
 
     int row = m_features.size();
-    int neighborsDownLimit = row * neighborRateLow;
-    int neighborsUpLimit = row * neighborRateHigh + 1;
+    double avgNeighbourNum = row * dc_percent;
 
     double dc = 0.0;
-    vector<double> boundaryDown(row, 0.0);
-    vector<double> boundaryUp(row, 0.0);
-
-    if(isUseDistMatrix) {
-        vector<vector<double>> matrix = m_distMatrix;
-
-#pragma omp parallel for
-        for (int i = 0; i < row; ++i) {
-            sort(matrix[i].begin(), matrix[i].end());
-            boundaryDown[i] = matrix[i][neighborsDownLimit];
-            boundaryUp[i] = matrix[i][neighborsUpLimit];
-        }
-    } else {
-#pragma omp parallel for
-        for (int i=0; i<row; ++i) {
-            vector<double> t_dist(row, 0.0);
-            for(int j=0; j<row; ++j) {
-                if(i <= j) {
-                    t_dist[j] = m_distMap[make_pair(i, j)];
-                } else {
-                    t_dist[j] = m_distMap[make_pair(j, i)];
-                }
-            }
-            sort(t_dist.begin(), t_dist.end());
-            boundaryDown[i] = t_dist[neighborsDownLimit];
-            boundaryUp[i] = t_dist[neighborsUpLimit];
+    vector<double> dis;
+    for(int i=0;i<row;++i) {
+        for(int j=i+1;j<row;++j) {
+            double d = 0.0;
+            if(isUseDistMatrix)
+                d = m_distMatrix[i][j];
+            else
+                d = m_distMap[make_pair(i,j)];
+            dis.push_back(d);
         }
     }
-
-    sort(boundaryDown.begin(), boundaryDown.end(), greater<double>());
-    sort(boundaryUp.begin(), boundaryUp.end());
-
-    for(int i=0; i<row; ++i) {
-        if(boundaryUp[i] >= boundaryDown[i]) {
-            dc = (boundaryUp[i] + boundaryDown[i]) / 2.0;
-            break;
-        }
-    }
+    sort(dis.begin(), dis.end());
+    dc = dis[int(avgNeighbourNum * row)];
+    maxd = dis[dis.size()-1];
 
     t = clock() - t;
     cout << "getDCDist took me " << t << " clicks (" << ((float)t)/CLOCKS_PER_SEC << " seconds)." << endl;
@@ -222,30 +197,64 @@ void DensityCluster::findDensity(double dc) {
     cout << "Finished Find Density !" << endl;
 }
 
-void DensityCluster::findDistanceToHigherDensity(double dc) {
+void DensityCluster::findDistanceToHigherDensity(double dc, double maxd) {
     int row = m_features.size();
-    m_minDist2Higher.resize(row, 0.0);
-    m_nearestNeighborOfHigherDensity.resize(row, 0);
-
-#pragma omp parallel for
-    for(int i=0; i<row; ++i) {
-        int index_density = m_density[i];
-        double minDist = dc;
-        for(int candidate=0; candidate<row; ++candidate) {
-            if(candidate != i) {
-                double candidate_dist = 0.0;
-                if(isUseDistMatrix) {
-                    candidate_dist = m_distMatrix[i][candidate];
-                } else {
-                    candidate_dist = m_distMap[make_pair(i>candidate?candidate:i, i>candidate?i:candidate)];
-                }
-                if(candidate_dist < minDist && m_density[candidate] > index_density) {
-                    minDist = candidate_dist;
-                    m_nearestNeighborOfHigherDensity[i] = candidate;
+    m_density_pair.resize(row, make_pair(0,0));
+    /* 使用掺入排序进行数据插入,并且按照从大到小进行排序 */
+    int sorted_index = 0;
+    m_density_pair[0] = make_pair(m_density[0], 0);
+    for(int i=1;i<row;++i) {
+        pair<int, int> tmp = make_pair(m_density[i], i);
+        if(sorted_index == 0) {
+            if(tmp.first > m_density_pair[0].first) {
+                m_density_pair[1] = m_density_pair[0];
+                m_density_pair[0] = tmp;
+            } else {
+                m_density_pair[1] = tmp;
+            }
+            sorted_index++;
+        } else {
+            int insertPos = -1;
+            for(int k=1;k<=sorted_index;++k) {
+                if(m_density_pair[k-1].first <= tmp.first) {
+                    insertPos = 0;
+                    break;
+                }else if(m_density_pair[k-1].first > tmp.first && m_density_pair[k].first < tmp.first) {
+                    insertPos = k;
+                    break;
                 }
             }
+            if(insertPos == -1) {
+                m_density_pair[sorted_index+1] = tmp;
+                sorted_index++;
+            } else {
+                for(int j=sorted_index;j>=insertPos;--j) {
+                    m_density_pair[j+1] = m_density_pair[j];
+                }
+                m_density_pair[insertPos] = tmp;
+                sorted_index++;
+            }
         }
-        m_minDist2Higher[i] = minDist;
+    }
+
+    m_minDist2Higher.resize(row, maxd);
+    m_nearestNeighbor.resize(row, -1);
+
+    for(int i=1; i<row; ++i) {
+        int ind_pos1 = m_density_pair[i].second;
+        for(int j=0;j<i;++j) {
+            int ind_pos2 = m_density_pair[j].second;
+            double tmp_dist = 0.0;
+            if(isUseDistMatrix) {
+                tmp_dist = m_distMatrix[ind_pos1][ind_pos2];
+            } else {
+                tmp_dist = m_distMap[make_pair(ind_pos1>ind_pos2?ind_pos2:ind_pos1, ind_pos1>ind_pos2?ind_pos1:ind_pos2)];
+            }
+            if(tmp_dist < m_minDist2Higher[ind_pos1]) {
+                m_minDist2Higher[ind_pos1] = tmp_dist;
+                m_nearestNeighbor[ind_pos1] = ind_pos2;
+            }
+        }
     }
     cout << "Finished findDistanceToHigherDensity !" << endl;
 }
@@ -255,6 +264,7 @@ void DensityCluster::findClusterCenters(double ratio) {
     vector<pair<int,double>> tmp;
     for(int i=0;i<total_len;++i) {
         tmp.push_back(make_pair(i, m_minDist2Higher[i] * m_density[i]));
+        cout << m_density[i] << "," << m_minDist2Higher[i] << endl;
     }
 
     sort(tmp.begin(), tmp.end(), [](pair<int, double>&left, pair<int, double>& right) {
@@ -268,59 +278,10 @@ void DensityCluster::findClusterCenters(double ratio) {
         }
     }
 
-//    for(int i=0; i<total_len; ++i) {
-//        cout << tmp[i].first << " ," << tmp[i].second << endl;
-//    }
+    for(int i=0; i<total_len; ++i) {
+        cout << tmp[i].first << "," << tmp[i].second << endl;
+    }
     saveData("centers.csv", "CENTER");
     cout << "Save Centers Data !" << endl;
 }
 
-void DensityCluster::makeCenters() {
-    m_clusterDesignation.resize(m_features.size() ,0);
-    for(int i=0;i<m_centers.size();++i) {
-        m_clusterDesignation[m_centers[i]] = m_centers[i];
-    }
-    cout << "Finished Make Centers !" << endl;
-}
-
-void DensityCluster::findClusterDesignation() {
-    int row = m_features.size();
-    for(int i=0; i<row; ++i) {
-        int nearInd = i;
-        int status = m_clusterDesignation[nearInd];
-        while(status == 0) {
-            int ind = m_nearestNeighborOfHigherDensity[nearInd];
-            status = m_clusterDesignation[ind];
-            nearInd = ind;
-        }
-        findSingleFeatureClusterDesignation(i);
-    }
-    cout << "Finished findClusterDesignation !" << endl;
-}
-
-int DensityCluster::findSingleFeatureClusterDesignation(int nearIndex) {
-    int status = m_clusterDesignation[nearIndex];
-    if(status == 0) {
-        int ind = m_nearestNeighborOfHigherDensity[nearIndex];
-        int resInd = findSingleFeatureClusterDesignation(ind);
-        m_clusterDesignation[nearIndex] = resInd;
-        return resInd;
-    }
-    return status;
-}
-
-void DensityCluster::fetchFeaturesInClusters() {
-    int row = m_features.size();
-    m_result.clear();
-
-    for(int i=0; i<m_centers.size(); ++i) {
-        vector<int> indCluster;
-        for(int j=0; j<row; ++j) {
-            if(m_clusterDesignation[j] == m_centers[i]) {
-                indCluster.push_back(j);
-            }
-        }
-        m_result[m_centers[i]] = indCluster;
-    }
-    saveData("densitycluster.csv", "RESULT");
-}

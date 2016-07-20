@@ -30,12 +30,16 @@
 ## 程序运行的框架
 ![算法的执行框架](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png)
 
-## Run Demo
+## 程序运行展示
 ### 测试数据的分布
 ![原始测试数据的分布](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png)
+![计算出来的分布图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/distribution.png)
+![按照论文中寻找聚类中心的结果图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/curve.png)
 
 ## References
 1. [Clustering by fast search and find of density peaks](http://people.sissa.it/~laio/Research/Res_clustering.php)
 2. [Science论文"Clustering by fast search and find of density peaks"学习笔记](http://blog.csdn.net/jdplus/article/details/40351541)
 3. [发表在 Science 上的一种新聚类算法](http://blog.csdn.net/itplus/article/details/38926837)
-4. [论文中的机器学习算法——基于密度峰值的聚类算法](http://blog.csdn.net/google19890102/article/details/37330471)
+4. [超级赞的文章,写的很好!](http://blog.findshine.com/2014/08/12/fast-cluster.html)
+5. [论文中的机器学习算法——基于密度峰值的聚类算法](http://blog.csdn.net/google19890102/article/details/37330471)
+6. [Clustering datasets](http://cs.joensuu.fi/sipu/datasets/)

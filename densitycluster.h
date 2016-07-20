@@ -47,18 +47,14 @@ public:
 public:
     inline double calcDist(vector<double>& v1, vector<double>& v2);
     bool calculateDistMatrix();
-    double getDCDist(double neighborRateLow, double neighborRateHigh);
+    double getDCDist(double dc_percent, double &maxd);
 
     /* 获取在给定截断距离下的各个特征点的个数信息 */
     void findDensity(double dc);
 
-    /*  */
-    void findDistanceToHigherDensity(double dc);
+    /* 计算每个点到最近的高密度距离中的最大距离,同时确定每个点离那个点更近 */
+    void findDistanceToHigherDensity(double dc, double maxd);
     void findClusterCenters(double ratio);
-    void makeCenters();
-    void findClusterDesignation();
-    int findSingleFeatureClusterDesignation(int nearIndex);
-    void fetchFeaturesInClusters();
 
 private:
     /* 主要用来存储待距离的特征向量 */
@@ -72,10 +68,12 @@ private:
 
     /* 该参数主要用来存储每个特征向量周边有多少个点是在DC距离内 */
     vector<int> m_density;
+    /* 该参数主要用来存储每个特征向量周边的密度信息和该点在features中的编号信息 <密度(个数),编号> */
+    vector<pair<int, int>> m_density_pair;
+
     vector<double> m_minDist2Higher;
-    vector<int> m_nearestNeighborOfHigherDensity;
+    vector<int> m_nearestNeighbor;
     vector<int> m_centers;
-    vector<int> m_clusterDesignation;
     /*
      * 主要用来存储程序运行的结果
      * key : type is int, means the index of the centers in the m_features
