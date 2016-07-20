@@ -52,19 +52,24 @@ void DensityCluster::generateFeatures(int row, int col) {
     std::normal_distribution<double> distribution03(-10.0,1.0);
 
     m_features.resize(row, vector<double>(col,0.0));
-
+    m_realClassType.resize(row, 0);
+    int curClass = 0;
+    double number = 0.0;
     for(int k=0; k<row; ++k) {
         for(int i=0; i<col; ++i) {
-            double number = 0.0;
             if(k / (row/3) == 0) {
                 number = distribution01(generator);
+                curClass = 1;
             } else if(k / (row/3) == 1) {
                 number = distribution02(generator);
+                curClass = 2;
             } else {
                 number = distribution03(generator);
+                curClass = 3;
             }
             m_features[k][i] = number;
         }
+        m_realClassType[k] = curClass;
     }
 
     t = clock() - t;
@@ -76,24 +81,16 @@ void DensityCluster::saveData(string filename, string saveType) {
     ofstream out(saveprefix + filename, ofstream::out);
     if(saveType.compare("FEATURE") == 0) {
         for(int i=0;i<m_features.size();++i) {
-            for(int j=0;j<m_features[i].size()-1;++j) {
+            for(int j=0;j<m_features[i].size();++j) {
                 out << m_features[i][j] << ",";
             }
-            out << m_features[i][m_features[i].size()-1] << endl;
+            out << m_realClassType[i] << endl;
         }
     }
-    if(saveType.compare("CENTER") == 0) {
-        for(int i=0;i<m_centers.size();++i) {
-            out << m_centers[i] << endl;
-        }
-    }
-    if(saveType.compare("RESULT") == 0) {
-        for(auto &kv : m_result) {
-            out << kv.first;
-            for(auto &val : kv.second) {
-                out << "," << val;
-            }
-            out << endl;
+    if(saveType.compare("CLASSTYPE") == 0) {
+        out << "RealClass,AlgorithmClass" << endl;
+        for(int i=0;i<m_realClassType.size();++i) {
+            out << m_realClassType[i] << "," << m_classType[i] << endl;
         }
     }
     out.close();
@@ -259,7 +256,7 @@ void DensityCluster::findDistanceToHigherDensity(double dc, double maxd) {
     cout << "Finished findDistanceToHigherDensity !" << endl;
 }
 
-void DensityCluster::findClusterCenters(double ratio) {
+void DensityCluster::findClusterCentersByRatio(double ratio) {
     int total_len = m_minDist2Higher.size();
     vector<pair<int,double>> tmp;
     for(int i=0;i<total_len;++i) {
@@ -277,11 +274,58 @@ void DensityCluster::findClusterCenters(double ratio) {
             m_centers.push_back(tmp[i].first);
         }
     }
-
-    for(int i=0; i<total_len; ++i) {
-        cout << tmp[i].first << "," << tmp[i].second << endl;
-    }
-    saveData("centers.csv", "CENTER");
-    cout << "Save Centers Data !" << endl;
 }
 
+void DensityCluster::findClusterCenters() {
+    int total_len = m_minDist2Higher.size();
+    vector<pair<int,double>> tmp;
+    for(int i=0;i<total_len;++i) {
+        tmp.push_back(make_pair(i, m_minDist2Higher[i] * m_density[i]));
+    }
+
+    sort(tmp.begin(), tmp.end(), [](pair<int, double>&left, pair<int, double>& right) {
+        return left.second > right.second;
+    });
+
+    vector<int> diff1;
+    int split_index = 0;
+    diff1.resize(total_len, 0);
+    double total_sum = 0.0;
+    for(int i=0;i<total_len-1;++i) {
+        diff1[i] = (int)(tmp[i].second - tmp[i+1].second);
+        total_sum += diff1[i];
+    }
+    double prefix_sum = diff1[0];
+    for(int i=1;i<diff1.size();++i) {
+        prefix_sum += diff1[i];
+        if(prefix_sum / total_sum >= 0.95) {
+            split_index = i;
+            break;
+        }
+    }
+    cout << "Find Center are :" << endl;
+    for(int i=0;i<=split_index;++i) {
+        m_centers.push_back(tmp[i].first);
+        cout << tmp[i].first << endl;
+    }
+    ofstream out(saveprefix + "desiciontree.csv", std::ofstream::out);
+    out << "m_minDist2Higher,m_density,PointInd,Poduct" << endl;
+    for(int i=0;i<tmp.size();++i) {
+        out << m_minDist2Higher[i] << "," << m_density[i] << "," << tmp[i].first << "," << tmp[i].second << endl;
+    }
+    out.close();
+}
+
+void DensityCluster::classifyFeatures2Centers() {
+    m_classType.resize(m_features.size(), -1);
+    for(int i=0;i<m_centers.size();++i) {
+        m_classType[m_centers[i]] = i+1;
+    }
+    for(int i=0;i<m_density_pair.size();++i) {
+        int ind = m_density_pair[i].second;
+        if(m_classType[ind] == -1 && m_classType[m_nearestNeighbor[ind]] != -1) {
+            m_classType[ind] = m_classType[m_nearestNeighbor[ind]];
+        }
+    }
+    saveData("classtype.csv","CLASSTYPE");
+}

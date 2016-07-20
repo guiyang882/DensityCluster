@@ -56,32 +56,36 @@ public:
     void findDistanceToHigherDensity(double dc, double maxd);
 
     /* 如何从论文中曲线去分析,使用策略寻找处潜在的聚类中心 */
-    void findClusterCenters(double ratio);
+    void findClusterCentersByRatio(double ratio = 0.3);
+
+    /* 根据论文中乘积曲线的一阶差分进行分析,得到我们选取的聚类中心 */
+    void findClusterCenters();
+
+    /* 根据找到的聚类中心将其他的点进行分类,确定点的类别 */
+    void classifyFeatures2Centers();
 
 private:
     /* 主要用来存储待距离的特征向量 */
     vector<vector<double>> m_features;
+    vector<int> m_realClassType;
 
     vector<vector<double>> m_distMatrix;
     map<pair<int, int>, double> m_distMap;
 
     /* 主要用来标记是否使用了距离矩阵来存储任意两个点之间的距离 */
     bool isUseDistMatrix;
-
     /* 该参数主要用来存储每个特征向量周边有多少个点是在DC距离内 */
     vector<int> m_density;
     /* 该参数主要用来存储每个特征向量周边的密度信息和该点在features中的编号信息 <密度(个数),编号> */
     vector<pair<int, int>> m_density_pair;
-
+    /* 该参数主要是用来存储每个特征向量到更高一级的密度点中的最短的距离 */
     vector<double> m_minDist2Higher;
+    /* 该参数主要是用来存储每个特征向量到更高密度点中的最近距离的index */
     vector<int> m_nearestNeighbor;
+    /* 该参数主要是用来存储该算法找到的聚类中心的位置 */
     vector<int> m_centers;
-    /*
-     * 主要用来存储程序运行的结果
-     * key : type is int, means the index of the centers in the m_features
-     * value: type is vector<int>, means the index of the m_features where closest to the some centers
-     * */
-    map<int, vector<int>> m_result;
+    /* 该参数主要是用来存储算法对每个特征点的分类结果 */
+    vector<int> m_classType;
 
 private:
     string saveprefix;
