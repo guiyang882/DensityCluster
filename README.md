@@ -32,13 +32,15 @@
 
 ## 程序运行的框架
 <div align=center>
-<img src="https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png" width="200" height="200" alt="算法的执行框架"/>
+<img src="https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png" width="500" height="300" alt="算法的执行框架"/>
 </div>
 
 ## 程序运行展示
 ### 测试数据的分布
 - 样本数据的展示
-![原始测试数据的分布](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png =200*200)
+<div align=center>
+<img src="https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png" width="500" height="300" alt="原始测试数据的分布"/>
+</div>
 - 按照论文中的方法去寻找聚类中心
 ![按照论文中寻找聚类中心的结果图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/findcenter.png)
 
