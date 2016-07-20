@@ -32,9 +32,10 @@
 
 ## 程序运行展示
 ### 测试数据的分布
+- 样本数据的展示
 ![原始测试数据的分布](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png)
-![计算出来的分布图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/distribution.png)
-![按照论文中寻找聚类中心的结果图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/curve.png)
+- 按照论文中的方法去寻找聚类中心
+![按照论文中寻找聚类中心的结果图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/findcenter.png)
 
 ## References
 1. [Clustering by fast search and find of density peaks](http://people.sissa.it/~laio/Research/Res_clustering.php)
