@@ -31,12 +31,12 @@
 3. 使用libopm进行算法的并行化,提高运行效率
 
 ## 程序运行的框架
-![算法的执行框架](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png)
+![算法的执行框架](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/flow.png =200x20)
 
 ## 程序运行展示
 ### 测试数据的分布
 - 样本数据的展示
-![原始测试数据的分布](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png)
+![原始测试数据的分布](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/features.png =200x200)
 - 按照论文中的方法去寻找聚类中心
 ![按照论文中寻找聚类中心的结果图](https://github.com/DengZhuangSouthRd/DensityCluster/blob/master/images/findcenter.png)
 
