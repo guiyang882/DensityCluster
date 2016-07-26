@@ -5,7 +5,7 @@
 #include "densitycluster.h"
 
 DensityCluster::DensityCluster() {
-    saveprefix = "/Users/liuguiyang/Documents/CodeProj/ConsoleProj/DensityCluster/data/";
+    saveprefix = "../data/";
 }
 
 DensityCluster::~DensityCluster() {
@@ -15,6 +15,7 @@ DensityCluster::~DensityCluster() {
 void DensityCluster::initFeaturesLocal(vector<vector<double>>& data) {
     m_features = data;
     saveData("features.csv", "FEATURE");
+    cout << "Save Feature.csv" << endl;
 }
 
 void DensityCluster::generateFeatures(int row, int col) {
@@ -64,8 +65,8 @@ void DensityCluster::saveData(string filename, string saveType) {
     }
     if(saveType.compare("CLASSTYPE") == 0) {
         out << "RealClass,AlgorithmClass" << endl;
-        for(int i=0;i<m_realClassType.size();++i) {
-            out << m_realClassType[i] << "," << m_classType[i] << endl;
+        for(int i=0;i<m_classType.size();++i) {
+            out << m_classType[i] << endl;
         }
     }
     out.close();
@@ -212,6 +213,7 @@ void DensityCluster::findDistanceToHigherDensity(double dc, double maxd) {
     m_minDist2Higher.resize(row, maxd);
     m_nearestNeighbor.resize(row, -1);
 
+#pragma omp parallel for
     for(int i=1; i<row; ++i) {
         int ind_pos1 = m_density_pair[i].second;
         for(int j=0;j<i;++j) {
@@ -302,4 +304,5 @@ void DensityCluster::classifyFeatures2Centers() {
             m_classType[ind] = m_classType[m_nearestNeighbor[ind]];
         }
     }
+    saveData("classifyType.csv", "CLASSTYPE");
 }
