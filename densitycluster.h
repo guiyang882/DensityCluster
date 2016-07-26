@@ -35,8 +35,7 @@ public:
     ~DensityCluster();
 
 public:
-    void initFeaturesLocal(string filename);
-    void splitString(string str, vector<double> &res, char ch);
+    void initFeaturesLocal(vector<vector<double >>& data);
     void generateFeatures(int row, int col);
     /*
      * filename : save user file name

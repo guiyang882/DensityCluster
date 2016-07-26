@@ -12,34 +12,9 @@ DensityCluster::~DensityCluster() {
 
 }
 
-void DensityCluster::initFeaturesLocal(string filename) {
-    ifstream in(filename, std::ifstream::in);
-    while(in.good()) {
-        string strFeature;
-        getline(in, strFeature);
-        vector<double> vals;
-        splitString(strFeature, vals, ',');
-        if(vals.size() > 0) {
-            m_features.push_back(vals);
-        }
-    }
-    in.close();
-    cout << "features size is (" << m_features.size() << "," << m_features[0].size() << ")" << endl;
-}
-
-void DensityCluster::splitString(string str, vector<double> &res, char ch) {
-    //trim the free space from the head and tail
-    str.erase(0,str.find_first_not_of(" "));
-    str.erase(str.find_last_not_of(" ") + 1);
-    if(str.size() == 0) return ;
-    int start=0, end=0;
-    while(start <= end && end < str.size()) {
-        while(end<str.size() && str[end]!=ch) end++;
-        string sub = str.substr(start, end-start);
-        res.push_back(stod(sub, 0));
-        while(end<str.size() && str[end]==ch) end++;
-        start = end;
-    }
+void DensityCluster::initFeaturesLocal(vector<vector<double>>& data) {
+    m_features = data;
+    saveData("features.csv", "FEATURE");
 }
 
 void DensityCluster::generateFeatures(int row, int col) {
@@ -81,10 +56,10 @@ void DensityCluster::saveData(string filename, string saveType) {
     ofstream out(saveprefix + filename, ofstream::out);
     if(saveType.compare("FEATURE") == 0) {
         for(int i=0;i<m_features.size();++i) {
-            for(int j=0;j<m_features[i].size();++j) {
+            for(int j=0;j<m_features[i].size()-1;++j) {
                 out << m_features[i][j] << ",";
             }
-            out << m_realClassType[i] << endl;
+            out << m_features[i][m_features[i].size()-1] << endl;
         }
     }
     if(saveType.compare("CLASSTYPE") == 0) {
@@ -327,5 +302,4 @@ void DensityCluster::classifyFeatures2Centers() {
             m_classType[ind] = m_classType[m_nearestNeighbor[ind]];
         }
     }
-    saveData("classtype.csv","CLASSTYPE");
 }

@@ -13,5 +13,5 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
-set(SOURCE_FILES main.cpp densitycluster.cpp densitycluster.h)
+set(SOURCE_FILES main.cpp densitycluster.cpp densitycluster.h utils.cpp utils.h)
 add_executable(DensityCluster ${SOURCE_FILES})
