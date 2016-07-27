@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
             for(int k=0;k<filelist.size();++k) {
                 readOneFileData(filelist[k], data);
             }
-            DensityCluster obj;
+            DensityCluster obj(dirs[i]);
             obj.initFeaturesLocal(data);
 //            obj.generateFeatures(3*20000, 2);
             obj.calculateDistMatrix();

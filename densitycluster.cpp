@@ -4,8 +4,10 @@
 
 #include "densitycluster.h"
 
-DensityCluster::DensityCluster() {
-    saveprefix = "../data/";
+DensityCluster::DensityCluster(string savedir) {
+    saveprefix = savedir;
+    if(saveprefix[saveprefix.size()-1] != '/')
+        saveprefix += "/";
 }
 
 DensityCluster::~DensityCluster() {
@@ -213,7 +215,6 @@ void DensityCluster::findDistanceToHigherDensity(double dc, double maxd) {
     m_minDist2Higher.resize(row, maxd);
     m_nearestNeighbor.resize(row, -1);
 
-#pragma omp parallel for
     for(int i=1; i<row; ++i) {
         int ind_pos1 = m_density_pair[i].second;
         for(int j=0;j<i;++j) {
