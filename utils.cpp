@@ -44,7 +44,7 @@ void getDirent(const char* topPath, vector<string> &dirs) {
             {
                 if(strncmp(ent->d_name, ".", 1) == 0)
                     continue;
-                cout << ent->d_name << endl;
+//                cout << ent->d_name << endl;
                 string absPath(topPath);
                 if(absPath[absPath.size() - 1] == '/')
                     absPath += string(ent->d_name);
@@ -67,23 +67,31 @@ void getThisDirentAllFiles(const char* curPath, vector<string> &absFilePath) {
             {
                 if(strncmp(ent->d_name, ".", 1) == 0)
                     continue;
-                cout << ent->d_name << endl;
+//                cout << ent->d_name << endl;
                 string abspath(curPath);
                 if(abspath[abspath.size()-1] == '/')
                     abspath += string(ent->d_name);
                 else
                     abspath = abspath + "/" + string(ent->d_name);
                 absFilePath.push_back(abspath);
+                if(abspath.find(".csv") != string::npos) {
+                    absFilePath.clear();
+                    return ;
+                }
                 break;
             }
         }
     }
 }
 
-void readOneFileData(string filepath, vector<vector<double >>& data) {
+void readOneFileData(string filepath, vector<vector<double >>& data, bool skipHeader) {
     ifstream in(filepath, std::ifstream::in);
     string strValue;
+    int index = 0;
     while(getline(in,strValue)) {
+        index++;
+        if(skipHeader == true && index == 1)
+            continue;
         vector<double > tmp;
         splitStr(strValue, tmp, ',');
         data.push_back(tmp);

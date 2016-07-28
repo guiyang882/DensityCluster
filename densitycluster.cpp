@@ -4,10 +4,12 @@
 
 #include "densitycluster.h"
 
-DensityCluster::DensityCluster(string savedir) {
+DensityCluster::DensityCluster(string savedir, int index) {
     saveprefix = savedir;
     if(saveprefix[saveprefix.size()-1] != '/')
         saveprefix += "/";
+    saveprefix += to_string(index);
+    saveprefix += "_";
 }
 
 DensityCluster::~DensityCluster() {
@@ -66,7 +68,7 @@ void DensityCluster::saveData(string filename, string saveType) {
         }
     }
     if(saveType.compare("CLASSTYPE") == 0) {
-        out << "RealClass,AlgorithmClass" << endl;
+        out << "AlgorithmClass" << endl;
         for(int i=0;i<m_classType.size();++i) {
             out << m_classType[i] << endl;
         }
@@ -175,7 +177,7 @@ void DensityCluster::findDensity(double dc) {
 void DensityCluster::findDistanceToHigherDensity(double dc, double maxd) {
     int row = m_features.size();
     m_density_pair.resize(row, make_pair(0,0));
-    /* 使用掺入排序进行数据插入,并且按照从大到小进行排序 */
+    /* 使用插入排序进行数据插入,并且按照从大到小进行排序 */
     int sorted_index = 0;
     m_density_pair[0] = make_pair(m_density[0], 0);
     for(int i=1;i<row;++i) {
@@ -239,7 +241,7 @@ void DensityCluster::findClusterCentersByRatio(double ratio) {
     vector<pair<int,double>> tmp;
     for(int i=0;i<total_len;++i) {
         tmp.push_back(make_pair(i, m_minDist2Higher[i] * m_density[i]));
-        cout << m_density[i] << "," << m_minDist2Higher[i] << endl;
+//        cout << m_density[i] << "," << m_minDist2Higher[i] << endl;
     }
 
     sort(tmp.begin(), tmp.end(), [](pair<int, double>&left, pair<int, double>& right) {
@@ -284,7 +286,7 @@ void DensityCluster::findClusterCenters() {
     cout << "Find Center are :" << endl;
     for(int i=0;i<=split_index;++i) {
         m_centers.push_back(tmp[i].first);
-        cout << tmp[i].first << endl;
+//        cout << tmp[i].first << endl;
     }
     ofstream out(saveprefix + "desiciontree.csv", std::ofstream::out);
     out << "m_minDist2Higher,m_density,PointInd,Poduct" << endl;

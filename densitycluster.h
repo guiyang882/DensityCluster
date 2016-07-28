@@ -31,7 +31,7 @@ using namespace std;
 
 class DensityCluster {
 public:
-    DensityCluster(string savedir);
+    DensityCluster(string savedir, int index);
     ~DensityCluster();
 
 public:
