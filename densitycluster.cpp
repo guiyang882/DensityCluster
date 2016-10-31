@@ -177,42 +177,12 @@ void DensityCluster::findDensity(double dc) {
 void DensityCluster::findDistanceToHigherDensity(double dc, double maxd) {
     int row = m_features.size();
     m_density_pair.resize(row, make_pair(0,0));
-    /* 使用插入排序进行数据插入,并且按照从大到小进行排序 */
-    int sorted_index = 0;
-    m_density_pair[0] = make_pair(m_density[0], 0);
-    for(int i=1;i<row;++i) {
-        pair<int, int> tmp = make_pair(m_density[i], i);
-        if(sorted_index == 0) {
-            if(tmp.first > m_density_pair[0].first) {
-                m_density_pair[1] = m_density_pair[0];
-                m_density_pair[0] = tmp;
-            } else {
-                m_density_pair[1] = tmp;
-            }
-            sorted_index++;
-        } else {
-            int insertPos = -1;
-            for(int k=1;k<=sorted_index;++k) {
-                if(m_density_pair[k-1].first <= tmp.first) {
-                    insertPos = 0;
-                    break;
-                }else if(m_density_pair[k-1].first > tmp.first && m_density_pair[k].first < tmp.first) {
-                    insertPos = k;
-                    break;
-                }
-            }
-            if(insertPos == -1) {
-                m_density_pair[sorted_index+1] = tmp;
-                sorted_index++;
-            } else {
-                for(int j=sorted_index;j>=insertPos;--j) {
-                    m_density_pair[j+1] = m_density_pair[j];
-                }
-                m_density_pair[insertPos] = tmp;
-                sorted_index++;
-            }
-        }
+    for(int i=0;i<m_density_pair.size();i++) {
+        m_density_pair[i] = make_pair(m_density[i], i);
     }
+    sort(m_density_pair.begin(), m_density_pair.end(), [](const pair<int, int> &left, const pair<int, int> &right) {
+        return left.first > right.first;
+    });
 
     m_minDist2Higher.resize(row, maxd);
     m_nearestNeighbor.resize(row, -1);

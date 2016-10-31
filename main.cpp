@@ -13,85 +13,82 @@ void fetchFileList(int start, int end, vector<string> srcFilelists, vector<strin
 
 int clusterDirs(int argc, char* argv[]) {
     if(argc == 2) {
-        vector<string> dirs;
-        getDirent(argv[1], dirs);
-        for(int i=0;i<dirs.size();++i) {
-            vector<string> filelist;
-            cout << dirs[i] << endl;
-            getThisDirentAllFiles(dirs[i].c_str(), filelist);
-            if(filelist.size() > 0) {
-                int start=0, end=10, index=0;
-                int alreadyRead = 0;
-                while(alreadyRead < filelist.size() && start < filelist.size()) {
-                    vector<string> readlists;
-                    fetchFileList(start, end, filelist, readlists);
-                    alreadyRead += readlists.size();
-                    start = end;
-                    end += 10;
-                    index++;
-                    if(readlists.size() == 0)
-                        break;
-                    cout << "Read Lists " << readlists.size() << endl;
-                    vector<vector<double>> data;
-                    for(int k=0;k<readlists.size();++k) {
-                        readOneFileData(readlists[k], data);
-                    }
-
-                    DensityCluster obj(dirs[i], index);
-                    obj.initFeaturesLocal(data);
-                    obj.calculateDistMatrix();
-                    double maxd = 0.0;
-                    double dc = obj.getDCDist(0.015, maxd);
-                    cout << "DC is " << dc << endl;
-                    obj.findDensity(dc);
-                    obj.findDistanceToHigherDensity(dc, maxd);
-                    obj.findClusterCenters();
-                    obj.classifyFeatures2Centers();
-                    cout << "Please See the File which in the data dirent !" << endl;
-                    vector<vector<double>>().swap(data);
+        string dirpath(argv[1]);
+        vector<string> filelist;
+        getThisDirentAllFiles(dirpath.c_str(), filelist);
+        if(filelist.size() > 0) {
+            int start=0, end=5, index=0;
+            int alreadyRead = 0;
+            while(alreadyRead < filelist.size() && start < filelist.size()) {
+                vector<string> readlists;
+                fetchFileList(start, end, filelist, readlists);
+                alreadyRead += readlists.size();
+                start = end;
+                end += 5;
+                index++;
+                if(readlists.size() == 0)
+                    break;
+                cout << "Read Lists " << readlists.size() << endl;
+                vector<vector<double>> data;
+                for(int k=0;k<readlists.size();++k) {
+                    readOneFileData(readlists[k], data);
                 }
+
+                DensityCluster obj(dirpath, index);
+                cout << "initFeaturesLocal" << endl;
+                obj.initFeaturesLocal(data);
+                cout << "calculateDistMatrix" << endl;
+                obj.calculateDistMatrix();
+                double maxd = 0.0;
+                double dc = obj.getDCDist(0.015, maxd);
+                cout << "DC is " << dc << endl;
+                cout << "findDensity" << endl;
+                obj.findDensity(dc);
+                cout << "findDistanceToHigherDensity" << endl;
+                obj.findDistanceToHigherDensity(dc, maxd);
+                cout << "findClusterCenters" << endl;
+                obj.findClusterCenters();
+                cout << "classifyFeatures2Centers" << endl;
+                obj.classifyFeatures2Centers();
+                cout << "Please See the File which in the data dirent !" << endl;
+                data.clear();
             }
         }
     }
     return 0;
 }
 
-int cluster_geo(int argc, char* argv[]) {
-    string path = "/Users/liuguiyang/Documents/CodeProj/PyProj/Kaggle/MobileUserDemographics/data/geo_position.csv";
-    vector<vector<double>> data;
-    readOneFileData(path, data, true);
-    set<pair<double, double>> sourceSet;
-    int srcLen = 0;
-    for(int i=0;i<data.size();++i) {
-        pair<double, double> tmp = make_pair(data[i][0], data[i][1]);
-        if(sourceSet.count(tmp) == 0) {
-            sourceSet.insert(tmp);
-            srcLen++;
+void match_brackets(string &dirpath) {
+    /*
+     * 在找到字符串中的左括号和右括号是在前面添加一下"\"
+     * */
+    int start=0;
+    while(start<dirpath.size()) {
+        if(dirpath[start] == ')' || dirpath[start] == '(') {
+            dirpath.insert(start, 1, '\\');
+            start++;
         }
+        start++;
     }
-    vector<vector<double>> newData(srcLen, vector<double>(2,0.0));
-    int ind = 0;
-    for(set<pair<double, double>>::iterator it=sourceSet.begin();it!=sourceSet.end();it++) {
-        newData[ind][0] = (*it).first;
-        newData[ind][1] = (*it).second;
-        ind++;
+}
+
+void getAllDirPaths(int argc, char* argv[]) {
+    if(argc != 3)
+        return;
+    vector<string> dirs;
+    getDirent(argv[1], dirs);
+    string cmd(argv[2]);
+    string str_cmd;
+
+    for(int i=0;i<dirs.size();i++) {
+        str_cmd = cmd + " " + dirs[i] + " &";
+        match_brackets(str_cmd);
+        cout << str_cmd << endl;
+        system(str_cmd.c_str());
     }
-    cout << newData.size() << "," << newData[0].size() << endl;
-    DensityCluster obj("/Users/liuguiyang/Documents/CodeProj/PyProj/Kaggle/MobileUserDemographics/data/", 1);
-    obj.initFeaturesLocal(newData);
-    obj.calculateDistMatrix();
-    double maxd = 0.0;
-    double dc = obj.getDCDist(0.015, maxd);
-    cout << "DC is " << dc << endl;
-    obj.findDensity(dc);
-    obj.findDistanceToHigherDensity(dc, maxd);
-    obj.findClusterCenters();
-    obj.classifyFeatures2Centers();
-    cout << "Please See the File which in the data dirent !" << endl;
-    return 0;
 }
 
 int main(int argc, char* argv[]) {
-    clusterDirs(argc, argv);
+    getAllDirPaths(argc, argv);
     return 0;
 }
